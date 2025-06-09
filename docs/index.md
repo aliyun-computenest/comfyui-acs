@@ -162,10 +162,22 @@ run_workflow_file("my_workflow.json")
 ```
 其中本地工作流采用下图提供的方式来获取：
 ![img_6.png](img_6.png)
-由于Comfyui未提供官方的API文档，此处仅提供一个完整的示例：关于如何使用API来调用工作流进行文生图或者文生视频等
+
+
+由于Comfyui未提供官方的API文档，此处根据文生视频和图生视频提供两个完整的示例：关于如何使用API来调用工作流进行文生图或者文生视频等
 访问：https://github.com/aliyun-computenest/comfyui-acs/
-更完整的调用示例可，找到demo文件夹
-![img_1.png](img_1.png)
+找到demo文件夹
+![img_7.png](img_7.png)
+
+### 文生视频API方式
+1. 打开text_to_video_workflow.json为定义的工作流，确认好模型。（里面默认定义的模型为14B的万相2.1文生视频模型）
+2. 确认好Prompt和生成的分辨率等参数
+3. 本地执行python text_to_video_example.py，等待视频生成
+
+### 图生视频API方式
+1. 打开image_to_video_workflow.json为定义的工作流，确认好模型。（里面默认定义的模型为14B的万相2.1图生视频模型）
+2. 确认好Prompt和生成的分辨率等参数
+3. 本地执行python image_to_video_example.py，等待视频生成
 
 
 ### 常见问题
