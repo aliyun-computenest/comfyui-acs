@@ -1,0 +1,205 @@
+{
+  "42": {
+    "inputs": {
+      "image": "jms.jpeg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "43": {
+    "inputs": {
+      "model_name": "wan2.1/Wan2_1_VAE_bf16.safetensors",
+      "precision": "bf16"
+    },
+    "class_type": "WanVideoVAELoader",
+    "_meta": {
+      "title": "WanVideo VAE Loader"
+    }
+  },
+  "44": {
+    "inputs": {
+      "model_name": "wan2.1/open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors",
+      "precision": "fp16",
+      "load_device": "offload_device"
+    },
+    "class_type": "LoadWanVideoClipTextEncoder",
+    "_meta": {
+      "title": "Load WanVideo Clip Encoder"
+    }
+  },
+  "45": {
+    "inputs": {
+      "model_name": "wan2.1/umt5-xxl-enc-bf16.safetensors",
+      "precision": "bf16",
+      "load_device": "offload_device",
+      "quantization": "disabled"
+    },
+    "class_type": "LoadWanVideoT5TextEncoder",
+    "_meta": {
+      "title": "Load WanVideo T5 TextEncoder"
+    }
+  },
+  "46": {
+    "inputs": {
+      "blocks_to_swap": 10,
+      "offload_img_emb": false,
+      "offload_txt_emb": false,
+      "use_non_blocking": true,
+      "vace_blocks_to_swap": 0
+    },
+    "class_type": "WanVideoBlockSwap",
+    "_meta": {
+      "title": "WanVideo BlockSwap"
+    }
+  },
+  "47": {
+    "inputs": {
+      "backend": "inductor",
+      "fullgraph": false,
+      "mode": "default",
+      "dynamic": false,
+      "dynamo_cache_size_limit": 64,
+      "compile_transformer_blocks_only": true,
+      "dynamo_recompile_limit": 128
+    },
+    "class_type": "WanVideoTorchCompileSettings",
+    "_meta": {
+      "title": "WanVideo Torch Compile Settings"
+    }
+  },
+  "48": {
+    "inputs": {
+      "model": "Wan2_1-I2V-14B-480P_fp8_e4m3fn.safetensors",
+      "base_precision": "bf16",
+      "quantization": "fp8_e4m3fn",
+      "load_device": "offload_device",
+      "attention_mode": "sageattn",
+      "block_swap_args": [
+        "46",
+        0
+      ]
+    },
+    "class_type": "WanVideoModelLoader",
+    "_meta": {
+      "title": "WanVideo Model Loader"
+    }
+  },
+  "49": {
+    "inputs": {
+      "positive_prompt": "The character is a young woman with long, dark hair adorned with an orange butterfly hairpin. She has large, expressive eyes and a gentle smile. She is wearing a light-colored blouse with a V-neck and a dark skirt.\n\nScene Description:\nOpening Scene:\n\nStart with a close-up of the character's face as she looks directly at the camera with a warm, inviting expression.\nGradually zoom out to reveal her full upper body, showing her outfit and the background.\nBackground:\n\nThe background should be a soft, natural setting with green foliage on the left side, suggesting an outdoor or garden-like environment.\nThe lighting should be soft and warm, creating a calm and serene atmosphere.\nCharacter Actions:\n\nThe character should gently move her head from side to side, maintaining eye contact with the camera.\nShe can subtly adjust her hair or touch her hairpin, adding a sense of liveliness to the scene.\nHer facial expressions should change slightly, showing different emotions such as happiness, curiosity, and contentment.\nCamera Movements:\n\nUse smooth camera movements to pan around the character, capturing her from different angles.\nInclude a few close-ups of her eyes and hairpin to emphasize these details.\nMusic and Sound Effects:\n\nAdd soft, ambient music that complements the serene mood of the scene.\nInclude subtle sound effects like rustling leaves or a gentle breeze to enhance the natural setting.\nClosing Scene:\n\nEnd the video with a slow zoom-in on the character's face as she smiles warmly at the camera.\nThe video should fade out with a soft, peaceful transition.",
+      "negative_prompt": "bad quality video",
+      "force_offload": true,
+      "t5": [
+        "45",
+        0
+      ]
+    },
+    "class_type": "WanVideoTextEncode",
+    "_meta": {
+      "title": "WanVideo TextEncode"
+    }
+  },
+  "50": {
+    "inputs": {
+      "generation_width": 720,
+      "generation_height": 512,
+      "num_frames": 121,
+      "force_offload": true,
+      "noise_aug_strength": 0,
+      "latent_strength": 1,
+      "clip_embed_strength": 1,
+      "adjust_resolution": true,
+      "clip_vision": [
+        "44",
+        0
+      ],
+      "image": [
+        "42",
+        0
+      ],
+      "vae": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "WanVideoImageClipEncode",
+    "_meta": {
+      "title": "WanVideo ImageClip Encode (Deprecated)"
+    }
+  },
+  "52": {
+    "inputs": {
+      "steps": 10,
+      "cfg": 6,
+      "shift": 5,
+      "seed": 1057359483639286,
+      "force_offload": true,
+      "scheduler": "dpm++",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "model": [
+        "48",
+        0
+      ],
+      "text_embeds": [
+        "49",
+        0
+      ],
+      "image_embeds": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "WanVideoSampler",
+    "_meta": {
+      "title": "WanVideo Sampler"
+    }
+  },
+  "53": {
+    "inputs": {
+      "enable_vae_tiling": true,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128,
+      "vae": [
+        "43",
+        0
+      ],
+      "samples": [
+        "52",
+        0
+      ]
+    },
+    "class_type": "WanVideoDecode",
+    "_meta": {
+      "title": "WanVideo Decode"
+    }
+  },
+  "54": {
+    "inputs": {
+      "frame_rate": 16,
+      "loop_count": 0,
+      "filename_prefix": "WanVideo2_1",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "53",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  }
+}
