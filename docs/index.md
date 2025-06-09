@@ -172,12 +172,14 @@ run_workflow_file("my_workflow.json")
 ### 文生视频API方式
 1. 打开text_to_video_workflow.json为定义的工作流，确认好模型。（里面默认定义的模型为14B的万相2.1文生视频模型）
 2. 确认好Prompt和生成的分辨率等参数
-3. 本地执行python text_to_video_example.py，等待视频生成
+3. 修改代码中server服务地址，由127.0.0.1到你的实际服务地址。![img_8.png](img_8.png)
+4. 本地执行python text_to_video_example.py，等待视频生成
 
 ### 图生视频API方式
 1. 打开image_to_video_workflow.json为定义的工作流，确认好模型。（里面默认定义的模型为14B的万相2.1图生视频模型）
 2. 确认好Prompt和生成的分辨率等参数
-3. 本地执行python image_to_video_example.py，等待视频生成
+3. 修改代码中server服务地址，由127.0.0.1到你的实际服务地址。![img_8.png](img_8.png)
+4. 本地执行python image_to_video_example.py，等待视频生成
 
 
 ### 常见问题

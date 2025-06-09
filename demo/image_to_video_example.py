@@ -14,7 +14,7 @@ def main():
 
     # 配置参数
     config = {
-        'server': '8.130.146.185:8188',
+        'server': '127.0.0.1:8188',
         'workflow_path': 'workflows/image_to_video_workflow.json',
         'input_image': 'my_image.png',
         'output_dir': './output/i2v/',
