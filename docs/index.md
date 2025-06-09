@@ -102,10 +102,69 @@ ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、�
 访问模版，或自己导入工作流使用。![img2img.png](img%2Fimg2img.png)
 
 ## API调用
+
+### API 端点概览
+
+| 端点 | 方法 | 功能 | 说明 |
+|------|------|------|------|
+| `/queue` | GET | 获取队列状态 | 查看当前任务队列 |
+| `/prompt` | POST | 提交工作流 | 执行生成任务 |
+| `/history/{prompt_id}` | GET | 获取执行历史 | 查看任务执行结果 |
+| `/upload/image` | POST | 上传图片 | 上传输入图片文件 |
+| `/view` | GET | 下载输出文件 | 获取生成的结果文件 |
+
+
 支持公网或者私网的API调用。
-由于Comfyui未提供官方的API文档，此处仅提供一个示例：关于如何使用API来调用工作流进行文生图或者文生视频等
+可参考一下代码实现一个API调用的脚本。
+```python
+import requests
+import json
+import time
+
+def run_workflow_file(workflow_file, server="http://127.0.0.1:8188"):
+    """运行本地工作流JSON文件"""
+    
+    # 加载工作流
+    with open(workflow_file, 'r', encoding='utf-8') as f:
+        workflow = json.load(f)
+    
+    # 提交
+    response = requests.post(f"{server}/prompt", json={"prompt": workflow})
+    prompt_id = response.json()['prompt_id']
+    print(f"任务提交: {prompt_id}")
+    
+    # 等待完成
+    while True:
+        response = requests.get(f"{server}/history/{prompt_id}")
+        history = response.json()
+        if prompt_id in history:
+            break
+        print("等待中...")
+        time.sleep(3)
+    
+    # 下载所有输出文件
+    outputs = history[prompt_id]['outputs']
+    for node_id, node_output in outputs.items():
+        # 处理不同类型的输出
+        for file_type in ['images', 'videos', 'gifs']:
+            if file_type in node_output:
+                for file_info in node_output[file_type]:
+                    filename = file_info['filename']
+                    file_url = f"{server}/view?filename={filename}&type=output"
+                    
+                    response = requests.get(file_url)
+                    with open(filename, 'wb') as f:
+                        f.write(response.content)
+                    print(f"已下载: {filename}")
+
+# 使用示例
+run_workflow_file("my_workflow.json")
+```
+其中本地工作流采用下图提供的方式来获取：
+![img_6.png](img_6.png)
+由于Comfyui未提供官方的API文档，此处仅提供一个完整的示例：关于如何使用API来调用工作流进行文生图或者文生视频等
 访问：https://github.com/aliyun-computenest/comfyui-acs/
-找到demo文件夹
+更完整的调用示例可，找到demo文件夹
 ![img_1.png](img_1.png)
 
 

@@ -35,7 +35,9 @@ Parameters:
     Label:
       en: Model Series
       zh-cn: 模型系列
-    Default: WanX-2.1
+    Default:
+      zh-cn: WanX-2.1。包含14B文、图生视频，1.3B文生视频，1.3BVace和Flux.dev模型
+      en: WanX-2.1 contains 14B text, 1.3B text-to-video, 1.3B video-to-text, and Flux.dev models
     AllowedValues:
       - WanX-2.1
   GpuSeries:
