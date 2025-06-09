@@ -1,0 +1,687 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description:
+  en: Create acs Cluster And JumpBox Ecs, Deploy with kubectl -f yaml with new vpc
+  zh-cn: 创建acs集群和跳板机并使用kubectl部署(新建vpc)
+Conditions:
+  IsPublicEnabled:
+    Fn::Equals:
+      - Ref: SupportPublicAccess
+      - true
+Parameters:
+  WhitelistConfirmation:
+    Type: "String"
+    Label:
+      en: "Whitelist Confirmation"
+      zh-cn: "白名单配置确认"
+    AssociationProperty: "AlertCheckbox"
+    AssociationPropertyMetadata:
+      Description:
+        zh-cn: |
+          <strong>重要前置条件：</strong>
+          使用本服务前，请确保已为P16EN/GU8TF实例正确配置白名单规则，请联系客服、销售或提交工单加白。
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">提交工单</a>
+        en: |
+          <strong>Important Preconditions:</strong>
+          Before using this service, please ensure that the whitelist rule for P16EN/GU8TF instances is correctly configured. Contact customer service, sales, or submit a ticket to add the whitelist.
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">Submit a ticket</a>
+      ConfirmText:
+        zh-cn: "我已确认完成白名单配置"
+        en: "I have confirmed the whitelist configuration"
+      Alert: true
+      Type: "warning"
+      MustChecked: true
+  ModelSeries:
+    Type: String
+    Label:
+      en: Model Series
+      zh-cn: 模型系列
+    Default: WanX-2.1
+    AllowedValues:
+      - WanX-2.1
+  GpuSeries:
+    Type: String
+    Label:
+      en: GPU Series
+      zh-cn: GPU系列
+    Default: P16EN
+    AllowedValues:
+      - P16EN
+      - GU8TF
+  SupportPublicAccess:
+    Type: Boolean
+    Label:
+      zh-cn: 支持公网访问
+      en: Support Public Access
+  EcsZoneId:
+    Type: String
+    Label:
+      en: ECS Zone ID
+      zh-cn: ECS 可用区
+    Description:
+      zh-cn: ECS跳板机可用区（同时也是ACS备可用区），该跳板机用于在ACS集群上执行kubectl部署命令，创建成功后如不需要可以手动释放
+      en: ECS jump box zone id, used to execute kubectl commands on ACS cluster, created successfully after no need to manually release
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    AssociationPropertyMetadata:
+      ExclusiveTo:
+        - AcsZoneId
+      AllowedValues:
+  AcsZoneId:
+    Type: String
+    Label:
+      en: ACS Zone ID
+      zh-cn: ACS 可用区
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+
+    AssociationPropertyMetadata:
+      ExclusiveTo:
+        - EcsZoneId
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - ${GpuSeries}
+              - P16EN
+          Value:
+            - cn-wulanchabu-a
+            - cn-beijing-d
+            - cn-shanghai-f
+            - cn-hangzhou-b
+            - ap-southeast-1a
+            - ap-southeast-1b
+            - ap-southeast-1c
+        - Condition:
+            Fn::Equals:
+              - ${GpuSeries}
+              - GU8TF
+          Value:
+            - cn-hangzhou-b
+            - cn-beijing-d
+            - cn-shanghai-f
+            - cn-shanghai-o
+            - cn-wulanchabu-c
+
+  LoginPassword:
+    NoEcho: true
+    Type: String
+    Description:
+      en: 'Length 8-32 characters, can contain size letters, Numbers and special symbols, including:! @ # $ % ^ & * ( ) _ + - ='
+      zh-cn: 长度8-32个字符,可包含大小字母、数字及特殊符号（包含：!@#$%^&*()_+-=）
+    Label:
+      en: Instance Password
+      zh-cn: 实例密码
+    ConstraintDescription:
+      en: '8-32 characters, can contain size letters, Numbers and special symbols, including:! @ # $ % ^ & * ( ) _ + - ='
+      zh-cn: 8-32个字符,可包含大小字母、数字及特殊符号（包含：!@#$%^&*()_+-=）
+    MinLength: 8
+    MaxLength: 32
+Resources:
+  OSSBucket:
+    Type: 'ALIYUN::OSS::Bucket'
+    Properties:
+      DeletionForce: true
+      BucketName:
+        Ref: ALIYUN::StackName
+  OSSRamUser:
+    DependsOn: OSSBucket
+    Type: ALIYUN::RAM::User
+    Properties:
+      UserName:
+        Ref: ALIYUN::StackName
+      Policies:
+        - PolicyName:
+            Ref: ALIYUN::StackName
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - oss:*
+                Effect: Allow
+                Resource:
+                  - Fn::Sub:
+                      - "acs:oss:*:*:${BucketName}"
+                      - BucketName:
+                          Fn::GetAtt:
+                            - OSSBucket
+                            - Name
+                  - Fn::Sub:
+                      - "acs:oss:*:*:${BucketName}/*"
+                      - BucketName:
+                          Fn::GetAtt:
+                            - OSSBucket
+                            - Name
+            Version: '1'
+  AccessKey:
+    DependsOn: OSSRamUser
+    Type: ALIYUN::RAM::AccessKey
+    Properties:
+      UserName:
+        Ref: ALIYUN::StackName
+  Vpc:
+    Type: ALIYUN::ECS::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+  EcsVSwitch:
+    Type: ALIYUN::ECS::VSwitch
+    DependsOn: Vpc
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock: 192.168.0.0/24
+      ZoneId:
+        Ref: EcsZoneId
+  AcsVSwitch:
+    Type: ALIYUN::ECS::VSwitch
+    DependsOn: Vpc
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock: 192.168.1.0/24
+      ZoneId:
+        Ref: AcsZoneId
+  EcsSecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: Vpc
+      SecurityGroupIngress:
+        - PortRange: '22/22'
+          Priority: 1
+          SourceCidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          NicType: intranet
+      SecurityGroupEgress:
+        - PortRange: '-1/-1'
+          Priority: 1
+          IpProtocol: all
+          DestCidrIp: 0.0.0.0/0
+          NicType: intranet
+
+  AcsCluster:
+    Type: ALIYUN::ACS::Cluster
+    Properties:
+      Name:
+        Ref: ALIYUN::StackName
+      EndpointPublicAccess: false
+      ComputeClass: gpu
+      ServiceCidr: 10.0.0.0/16
+      ClusterSpec: ack.pro.small
+      LoggingType: sls
+      SnatEntry: true
+      # 不可修改两个vsw的顺序，否则可能创建报错
+      VSwitchIds:
+        - Ref: EcsVSwitch
+        - Ref: AcsVSwitch
+      VpcId:
+        Ref: Vpc
+      ZoneIds:
+        - Ref: EcsZoneId
+        - Ref: AcsZoneId
+      PodVSwitchIds:
+        - Ref: EcsVSwitch
+        - Ref: AcsVSwitch
+      ServiceDiscoveryTypes:
+        - CoreDNS
+      DeleteOptions:
+        - DeleteMode: delete
+          ResourceType: SLS_Data
+        - DeleteMode: delete
+          ResourceType: SLS_ControlPlane
+      PodPostpaidSpec:
+        GpuQuantityConfigs:
+          GpuModel: PPU810E
+          GpuQuantity: 1
+          ComputeQos: default
+          Arch: Intel
+        MemGib: 80
+        CpuCore: 10
+  EcsInstanceJumpBox:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      InstanceName:
+        Fn::Join:
+          - '-'
+          - - Ref: ALIYUN::StackName
+            - jumpbox
+      ImageId: comfyui-wanx
+      #        Fn::FindInMap:
+      #          - ModelMapping
+      #          - ModelImageMap
+      #          - Ref: Model
+      InstanceType: 'ecs.u1-c1m2.xlarge'
+      ZoneId:
+        Ref: EcsZoneId
+      VpcId:
+        Ref: Vpc
+      VSwitchId:
+        Ref: EcsVSwitch
+      SecurityGroupId:
+        Ref: EcsSecurityGroup
+      AllocatePublicIP: false
+      Password:
+        Ref: LoginPassword
+      MaxAmount: 1
+      InstanceChargeType: PostPaid
+      SystemDiskSize: 200
+      SystemDiskCategory: cloud_essd
+  RunAllCommands:
+    Type: ALIYUN::ECS::RunCommand
+    DependsOn:
+      - EcsInstanceJumpBox
+      - AcsCluster
+      - OSSBucket
+    Properties:
+      Sync: true
+      Type: RunShellScript
+      InstanceIds:
+        - Fn::Select:
+            - 0
+            - Fn::GetAtt:
+                - EcsInstanceJumpBox
+                - InstanceIds
+      Timeout: '86400'  # 延长超时时间
+      CommandContent:
+        Fn::Sub:
+          - |
+            #!/bin/bash
+            # 设置日志输出：普通日志记录到文件，错误信息同时输出到终端和文件
+            exec > >(cat >>/tmp/deploy.log) 2> >(tee -a /tmp/deploy.log >&2)
+            set -e  # 遇到错误立即终止
+
+            # --- 1. 安装基础工具 ---
+            echo "Checking kubectl installation..."
+            if ! command -v kubectl &> /dev/null; then
+              echo "Installing kubectl..."
+              wget {{ computenest::file::kubectl }} -O kubectl >> /tmp/deploy.log 2>&1
+              install -o root -g root -m 0755 kubectl /usr/bin/kubectl >> /tmp/deploy.log 2>&1
+              chmod +x /usr/bin/kubectl
+              echo "Configuring kubectl..."
+              mkdir -p ~/.kube
+              echo '${kubeConfig}' >> ~/.kube/config
+              sleep 10
+            else
+              echo "kubectl already installed."
+            fi
+            
+            echo "Checking ossutil installation..."
+            if ! command -v ossutil &> /dev/null; then
+              echo "Configuring OSS..."
+              sudo -v >> /tmp/deploy.log 2>&1
+            
+              # 安装ossutil2.0
+              wget {{ computenest::file::ossutil }} -O ossutil.zip >> /tmp/deploy.log 2>&1
+              unzip ossutil.zip >> /tmp/deploy.log 2>&1
+              cd ossutil-2.1.0-linux-amd64
+              chmod 755 ossutil >> /tmp/deploy.log 2>&1
+              mv -f ossutil /usr/local/bin/ && sudo ln -sf /usr/local/bin/ossutil /usr/bin/ossutil >> /tmp/deploy.log 2>&1
+              ossutil >> /tmp/deploy.log 2>&1
+            else
+              echo "ossutil already installed."
+            fi
+            cd ..
+            cat >> /usr/bin/oss.cfg <<EOF
+            [Credentials]
+            endpoint = oss-${regionId}-internal.aliyuncs.com
+            accessKeyID = ${accessKeyId}
+            accessKeySecret = ${accessKeySecret}
+            region = ${regionId}
+            EOF
+            
+            sysctl -w net.ipv4.tcp_window_scaling=1
+            sysctl -w net.core.rmem_max=16777216
+            sysctl -w net.core.wmem_max=16777216
+            ossutil --config-file /usr/bin/oss.cfg cp -r /root/storage/ oss://${bucketName}/llm-model/ --ignore-existing | tee download.log
+
+
+            # --- 3. 下载并解压所有 YAML 文件 ---
+            echo "Downloading and extracting YAML templates..."
+            if [ ! -f "wanx-resource.tar.gz" ]; then
+              echo "Downloading YAML files..."
+              wget {{ computenest::file::wanx-resource }} -O wanx-resource.tar.gz >> /tmp/deploy.log 2>&1
+            else
+              echo "YAML tar file already exists."
+            fi
+            
+            if [ ! -d "wanx-resource" ]; then
+              echo "Extracting YAML files..."
+              tar -xzvf wanx-resource.tar.gz >> /tmp/deploy.log 2>&1
+              cd wanx-resource || exit
+            else
+              echo "YAML directory already exists."
+              cd wanx-resource || exit
+            fi
+            
+            echo "Deploying pre-requisites..."
+            sed -i "s|\${!AccessKeyId}|${accessKeyId}|g" pre-deploy-application.yaml
+            sed -i "s|\${!AccessKeySecret}|${accessKeySecret}|g" pre-deploy-application.yaml
+            cat pre-deploy-application.yaml
+            # 检查是否已部署
+             kubectl --kubeconfig ~/.kube/config apply -f pre-deploy-application.yaml --validate=false
+            
+              echo "Pre-requisites already deployed."
+            
+            
+            echo "Deploying pvc application..."
+            sed -i "s|\${!RegionId}|${regionId}|g" oss-pv-pvc.yaml
+            sed -i "s|\${!BucketName}|${bucketName}|g" oss-pv-pvc.yaml
+            kubectl apply -f oss-pv-pvc.yaml --validate=false
+
+
+            # --- 5. 部署模型 ---
+            echo "Deploying model..."
+            case "${GpuSeries}" in
+              "P16EN"|"ppu")
+              CONFIG_FILE="wanx21-application-ppu.yaml"
+            echo "检测到PPU系列GPU，使用配置文件: ${!CONFIG_FILE}"
+              ;;
+              "GU8TF")
+              CONFIG_FILE="wanx21-application-h20.yaml"
+              echo "检测到H20/H100系列GPU，使用配置文件: ${!CONFIG_FILE}"
+              ;;
+              *)
+            echo "错误: 不支持的GPU系列 '${GpuSeries}'"
+            echo "支持的GPU系列: PPU, H20, H100"
+              exit 1
+              ;;
+              esac            
+            cat ${!CONFIG_FILE} && kubectl apply -f ${!CONFIG_FILE} --validate=false
+            echo "Monitoring deployment: $DEPLOYMENT"
+            NAMESPACE="default"
+            MAX_ATTEMPTS=300
+            INTERVAL=20
+            SUCCESS=false
+            for ((i=1; i<=MAX_ATTEMPTS; i++)); do
+              # 首先检查 Deployment 是否存在
+              if ! kubectl get deployment comfyui -n "$NAMESPACE" &>/dev/null; then
+                echo "Deployment comfyui does not exist! (Attempt $i/$MAX_ATTEMPTS)"
+                sleep $INTERVAL
+                continue
+              fi
+              POD=$(kubectl get pods -n "$NAMESPACE" -l app="comfyui" -o jsonpath='{.items[0].metadata.name}')
+              if [ -z "$POD" ]; then
+                  echo "Waiting for pod creation... ($i/$MAX_ATTEMPTS)"
+              else
+                  CONTAINER_INSTANCE_STATUS=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="ContainerInstanceCreated")].status}' 2>/dev/null)
+                  CONTAINER_INSTANCE_REASON=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="ContainerInstanceCreated")].reason}' 2>/dev/null)
+            
+                  if [[ "$CONTAINER_INSTANCE_STATUS" == "False" ]]; then
+                    if [[ "$CONTAINER_INSTANCE_REASON" == *"FailedScheduling"* ]]; then
+                      echo "Error: ContainerInstanceCreated failed due to scheduling failure!"
+                      echo "Pod $POD is in phase: $PHASE (Attempt $i/$MAX_ATTEMPTS)"
+                      echo "Exiting due to scheduling error."
+                      SUCCESS=false
+                      break
+                    elif [[ "$CONTAINER_INSTANCE_REASON" == "FeatureGetNoPermission" ]]; then
+                      echo "Error: ContainerInstanceCreated failed due to permission issue: FeatureGetNoPermission"
+                      echo "Pod $POD is in phase: $PHASE (Attempt $i/$MAX_ATTEMPTS)"
+                      echo "请检查 GPU 资源访问权限：PPU/H20/H20-3e 实例是否已正确配置白名单？"
+                      echo "Exiting due to permission error."
+                      SUCCESS=false
+                      break
+                    fi
+                  fi
+            
+                  READY=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.containerStatuses[0].ready}')
+                  PHASE=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.phase}')
+                  if [[ "$READY" == "true" && "$PHASE" == "Running" ]]; then
+                      echo "Pod $POD is ready!"
+                      SUCCESS=true
+                      break
+                  else
+                      echo "Pod $POD status: $PHASE (Attempt $i/$MAX_ATTEMPTS)"
+                  fi
+              fi
+              sleep $INTERVAL
+            done
+            
+              # 处理结果
+            if [ "$SUCCESS" = "true" ]; then
+                echo "Deployment succeeded"
+            else
+                echo "GPU库存不足，Pod拉起失败" >&2
+                echo "Pod 状态信息：" >&2
+                kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{range .status.containerStatuses[*]}Container: {.name} | Ready: {.ready} | State: {.state}{"\n"}{end}' >&2 || true                                                                                       
+                echo "最近事件：" >&2
+                kubectl get events --field-selector involvedObject.name="$POD" -n "$NAMESPACE" --sort-by='.lastTimestamp' -o jsonpath='{range .items[*]}{.lastTimestamp} {.reason} {.message}{"\n"}{end}' >&2 || true
+                exit 1
+            fi
+
+            # --- 6. 创建服务（私有/公网）---
+            echo "Creating services..."
+            cat private-service.yaml
+            if ! kubectl --kubeconfig ~/.kube/config get service svc-private -n "$NAMESPACE" &> /dev/null; then
+              kubectl --kubeconfig ~/.kube/config apply -f private-service.yaml --validate=false
+            else
+              echo "Private service already exists."
+            fi
+
+            if [ "${supportPublicAccess}" = "True" ]; then
+              cat public-service.yaml
+              if ! kubectl --kubeconfig ~/.kube/config get service svc-public -n "$NAMESPACE" &> /dev/null; then
+                kubectl --kubeconfig ~/.kube/config apply -f public-service.yaml --validate=false
+              else
+                echo "Public service already exists."
+              fi
+            fi
+            
+            # --- 7. 检测Private Service是否正常（最大15min）---
+            # 新增：获取 Private Service 的 LoadBalancer IP
+            MAX_ATTEMPTS=90
+            INTERVAL=10
+            SERVICE_NAME="svc-private"
+            PRIVATE_IP=""
+            for ((i=1; i<=MAX_ATTEMPTS; i++)); do
+              PRIVATE_IP=$(kubectl get service "$SERVICE_NAME" -n "$NAMESPACE" -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+              if [[ -n "$PRIVATE_IP" && "$PRIVATE_IP" != "<pending>" ]]; then
+                echo "Private Service IP: $PRIVATE_IP" >&2
+                break
+              else
+                echo "Waiting for IP... (Attempt $i/$MAX_ATTEMPTS)" >&2
+                sleep $INTERVAL
+              fi
+            done
+
+            if [[ -z "$PRIVATE_IP" || "$PRIVATE_IP" == "<pending>" ]]; then
+              echo "Failed to get Private Service IP after $MAX_ATTEMPTS attempts" >&2
+              exit 1
+            fi
+
+          - kubeConfig:
+              Fn::GetAtt:
+                - AcsCluster
+                - PrivateUserKubConfig
+            GpuSeries:
+              Ref: GpuSeries
+            regionId:
+              Ref: ALIYUN::Region
+            bucketName:
+              Fn::GetAtt:
+                - OSSBucket
+                - Name
+            supportPublicAccess:
+              Ref: SupportPublicAccess
+            accessKeyId:
+              Fn::GetAtt:
+                - AccessKey
+                - AccessKeyId
+            accessKeySecret:
+              Fn::GetAtt:
+                - AccessKey
+                - AccessKeySecret
+
+  PrivateIngressResources:
+    Type: DATASOURCE::CS::ClusterApplicationResources
+    DependsOn:
+      - RunAllCommands
+    Properties:
+      Namespace: default
+      Kind: Service
+      FirstMatch: True
+      ApiVersion: v1
+      JsonPath: $.status.loadBalancer.ingress[0].ip
+      ClusterId:
+        Fn::GetAtt:
+          - AcsCluster
+          - ClusterId
+      Name: svc-private
+  PublicIngressResources:
+    Type: DATASOURCE::CS::ClusterApplicationResources
+    DependsOn:
+      - RunAllCommands
+    Condition: IsPublicEnabled
+    Properties:
+      Namespace: default
+      Kind: Service
+      FirstMatch: True
+      ApiVersion: v1
+      JsonPath: $.status.loadBalancer.ingress[0].ip
+      ClusterId:
+        Fn::GetAtt:
+          - AcsCluster
+          - ClusterId
+      Name: svc-public
+Mappings:
+  ModelMapping:
+    #    ModelImageMap:
+    #      'QwQ-32B_H20': 'm-qwq-32b-h20'
+    #      'Qwen3-32B_H20': 'm-qwen3-32b'
+    #      'Qwen3-32B_PPU': 'm-qwen3-32b'
+    #      'Qwen3-235B-A22B_H20': 'm-qwen3-235b-a22b'
+    #      'Qwen3-235B-A22B_PPU': 'm-qwen3-235b-a22b'
+    #      'Qwen3-235B-A22B_FP8_H20': 'm-qwen3-235b-a22b-fp8'
+    #      'DeepSeek-R1_671B_H20': 'm-deepseek-r1-671b'
+    #      'DeepSeek-R1_671B_H20-3e': 'm-deepseek-r1-671b'
+    #      'DeepSeek-R1_671B_PPU': 'm-deepseek-r1-671b'
+    #      'DeepSeek-R1_32B_H20': 'm-deepseek-r1-32b'
+    #      'DeepSeek-R1_32B_H20-3e': 'm-deepseek-r1-32b'
+    #      'DeepSeek-R1_32B_PPU': 'm-deepseek-r1-32b'
+    #      'DeepSeek-R1_70B_H20': 'm-deepseek-r1-70b'
+    #      'DeepSeek-R1_70B_H20-3e': 'm-deepseek-r1-70b'
+    #      'DeepSeek-R1_70B_PPU': 'm-deepseek-r1-70b'
+    ModelNameMap:
+      'QwQ-32B_H20': 'Qwen/QwQ-32B'
+      'Qwen3-32B_H20': 'Qwen/Qwen3-32B'
+      'Qwen3-32B_PPU': 'Qwen/Qwen3-32B'
+      'Qwen3-235B-A22B_H20': 'Qwen/Qwen3-235B-A22B'
+      'Qwen3-235B-A22B_PPU': 'Qwen/Qwen3-235B-A22B'
+      'Qwen3-235B-A22B_FP8_H20': 'Qwen/Qwen3-235B-A22B-FP8'
+      'DeepSeek-R1_671B_H20': 'deepseek-ai/DeepSeek-R1'
+      'DeepSeek-R1_671B_H20-3e': 'deepseek-ai/DeepSeek-R1'
+      'DeepSeek-R1_671B_PPU': 'deepseek-ai/DeepSeek-R1'
+      'DeepSeek-R1_32B_H20': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_32B_H20-3e': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_32B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_70B_H20': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+      'DeepSeek-R1_70B_H20-3e': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+      'DeepSeek-R1_70B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+    ModelDiskSizeMap:
+      'QwQ-32B_H20': 170
+      'Qwen3-32B_H20': 200
+      'Qwen3-32B_PPU': 200
+      'Qwen3-235B-A22B_H20': 1500
+      'Qwen3-235B-A22B_PPU': 1500
+      'Qwen3-235B-A22B_FP8_H20': 550
+      'DeepSeek-R1_671B_H20': 1500
+      'DeepSeek-R1_671B_H20-3e': 1500
+      'DeepSeek-R1_671B_PPU': 1500
+      'DeepSeek-R1_32B_H20': 170
+      'DeepSeek-R1_32B_H20-3e': 170
+      'DeepSeek-R1_32B_PPU': 170
+      'DeepSeek-R1_70B_H20': 300
+      'DeepSeek-R1_70B_H20-3e': 300
+      'DeepSeek-R1_70B_PPU': 300
+    ServedModelNameMap:
+      'QwQ-32B_H20': 'qwq-32b'
+      'Qwen3-32B_H20': 'qwen3'
+      'Qwen3-32B_PPU': 'qwen3'
+      'Qwen3-235B-A22B_H20': 'qwen3'
+      'Qwen3-235B-A22B_PPU': 'qwen3'
+      'Qwen3-235B-A22B_FP8_H20': 'qwen3'
+      'DeepSeek-R1_671B_H20': 'deepseek-r1'
+      'DeepSeek-R1_671B_H20-3e': 'deepseek-r1'
+      'DeepSeek-R1_671B_PPU': 'deepseek-r1'
+      'DeepSeek-R1_32B_H20': 'deepseek-r1'
+      'DeepSeek-R1_32B_H20-3e': 'deepseek-r1'
+      'DeepSeek-R1_32B_PPU': 'deepseek-r1'
+      'DeepSeek-R1_70B_H20': 'deepseek-r1'
+      'DeepSeek-R1_70B_H20-3e': 'deepseek-r1'
+      'DeepSeek-R1_70B_PPU': 'deepseek-r1'
+    ModelYamlMap:
+      'QwQ-32B_H20': 'qwq-application.yaml'
+      'Qwen3-32B_H20': 'qwen3-32b-h20-application.yaml'
+      'Qwen3-32B_PPU': 'qwen3-32b-ppu-application.yaml'
+      'Qwen3-235B-A22B_H20': 'qwen3-235b-a22b-h20-application.yaml'
+      'Qwen3-235B-A22B_PPU': 'qwen3-235b-a22b-ppu-application.yaml'
+      'Qwen3-235B-A22B_FP8_H20': 'qwen3-235b-a22b-fp8-h20-application.yaml'
+      'DeepSeek-R1_671B_H20': 'deepseek-671b-h20-application.yaml'
+      'DeepSeek-R1_671B_H20-3e': 'deepseek-671b-h20-3e-application.yaml'
+      'DeepSeek-R1_671B_PPU': 'deepseek-671b-ppu-application.yaml'
+      'DeepSeek-R1_32B_H20': 'deepseek-32b-h20-application.yaml'
+      'DeepSeek-R1_32B_H20-3e': 'deepseek-32b-h20-3e-application.yaml'
+      'DeepSeek-R1_32B_PPU': 'deepseek-32b-ppu-application.yaml'
+      'DeepSeek-R1_70B_H20': 'deepseek-70b-h20-application.yaml'
+      'DeepSeek-R1_70B_H20-3e': 'deepseek-70b-h20-3e-application.yaml'
+      'DeepSeek-R1_70B_PPU': 'deepseek-70b-ppu-application.yaml'
+    GPUModelMap:
+      'QwQ-32B_H20': 'H20'
+      'Qwen3-32B_H20': 'H20'
+      'Qwen3-32B_PPU': 'PPU810E'
+      'Qwen3-235B-A22B_H20': 'H20'
+      'Qwen3-235B-A22B_PPU': 'PPU810E'
+      'Qwen3-235B-A22B_FP8_H20': 'H20'
+      'DeepSeek-R1_671B_H20': 'H20'
+      'DeepSeek-R1_671B_H20-3e': 'H20-3e'
+      'DeepSeek-R1_671B_PPU': 'PPU810E'
+      'DeepSeek-R1_32B_H20': 'H20'
+      'DeepSeek-R1_32B_H20-3e': 'H20-3e'
+      'DeepSeek-R1_32B_PPU': 'PPU810E'
+      'DeepSeek-R1_70B_H20': 'H20'
+      'DeepSeek-R1_70B_H20-3e': 'H20-3e'
+      'DeepSeek-R1_70B_PPU': 'PPU810E'
+    PPU810E_CPUMap:
+      '1': 10
+      '2': 22
+      '4': 46
+      '8': 92
+      '16': 184
+    PPU810E_MemoryMap:
+      '1': 80
+      '2': 225
+      '4': 450
+      '8': 900
+      '16': 1800
+Outputs:
+  内网地址:
+    Label: 内网地址
+    Value:
+      Fn::Sub:
+        - 'http://${PrivateIp}:8188/'
+        - PrivateIp:
+            Fn::GetAtt:
+              - PrivateIngressResources
+              - Response
+  公网地址:
+    Label: 公网地址
+    Condition: IsPublicEnabled
+    Value:
+      Fn::Sub:
+        - 'http://${PublicIp}:8188/'
+        - PublicIp:
+            Fn::GetAtt:
+              - PublicIngressResources
+              - Response
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - WhitelistConfirmation
+          - ModelSeries
+          - GpuSeries
+          - SupportPublicAccess
+        Label:
+          en: Model Config
+          zh-cn: 模型配置
+      - Parameters:
+          - AcsZoneId
+          - EcsZoneId
+          - LoginPassword
+        Label:
+          en: Basic Configuration
+          zh-cn: 资源配置

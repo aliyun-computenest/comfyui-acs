@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: acs-image-secret
+  namespace: default
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJlZ3NsaW5nanVuLXJlZ2lzdHJ5LmNuLXd1bGFuY2hhYnUuY3IuYWxpeXVuY3MuY29tIjogewoJCQkiYXV0aCI6ICJiVzk1WVc5QU1Ua3dNekF4TlRBM05USXlPVEl3T1RwRGJuQkZVakEyTWxGdklRPT0iCgkJfQoJfQp9Cg==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: comfyui
+  name: comfyui
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: comfyui
+  template:
+    metadata:
+      labels:
+        alibabacloud.com/compute-class: gpu
+        alibabacloud.com/gpu-model-series: H20
+        app: comfyui
+    spec:
+      imagePullSecrets:
+        - name: acs-image-secret
+      containers:
+        - name: comfyui
+          image: compute-nest-registry.cn-hangzhou.cr.aliyuncs.com/computenest/comfyui:latest
+          workingDir: /workspace/pytorch/ComfyUI
+          ports:
+            - containerPort: 8188
+              name: server
+              protocol: TCP
+          command: ["python3", "main.py", "--listen", "--port", "8188", "--fast"]
+          resources:
+            limits:
+              cpu: "8"
+              memory: "96Gi"
+              alibabacloud.com/ppu: 1  # 按需决定是否保留 GPU 声明
+              ephemeral-storage: 200Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /workspace/pytorch/ComfyUI/models
+              name: llm-model
+              subPath: models
+            - mountPath: /workspace/pytorch/ComfyUI/output
+              name: llm-model
+              subPath: output
+            - mountPath: /workspace/pytorch/ComfyUI/user_scripts
+              name: llm-model
+              subPath: user_scripts
+            - mountPath: /workspace/pytorch/ComfyUI/user
+              name: llm-model
+              subPath: user
+            - mountPath: /workspace/pytorch/ComfyUI/input
+              name: llm-model
+              subPath: input
+      volumes:
+        - name: llm-model
+          persistentVolumeClaim:
+            claimName: llm-model
+        - name: ephemeral
+          emptyDir:
+            sizeLimit: 100G

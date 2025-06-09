@@ -1,0 +1,26 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: llm-model
+provisioner: ossplugin.csi.alibabacloud.com
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  bucket: "${BucketName}"
+  url: "oss-${RegionId}-internal.aliyuncs.com"
+  path: "/llm-model"
+  otherOpts: "-o umask=022 -o max_stat_cache_size=0 -o allow_other"
+  csi.storage.k8s.io/node-publish-secret-name: oss-secret
+  csi.storage.k8s.io/node-publish-secret-namespace: default
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-model
+  namespace: default
+spec:
+  accessModes: [ "ReadWriteMany" ]
+  storageClassName: llm-model
+  resources:
+    requests:
+      storage: 2048Gi
