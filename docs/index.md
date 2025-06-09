@@ -65,7 +65,7 @@ ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、�
    ![img_1.png](img/price.png)
 
 3. 等待部署完成后就可以开始使用服务。
-   ![result.png](result.png)
+   ![img_2.png](img_2.png)
 
 ## 内置模型说明
 | 模型名称 | 类型 | 参数规模 | 分辨率 | 量化格式 | 简介 |
@@ -102,6 +102,9 @@ ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、�
 ## API调用
 支持公网或者私网的API调用。
 由于Comfyui未提供官方的API文档，此处仅提供一个示例：关于如何使用API来调用工作流进行文生图或者文生视频等
+访问：https://github.com/aliyun-computenest/comfyui-acs/
+找到demo文件夹
+![img_1.png](img_1.png)
 
 
 ### 常见问题
