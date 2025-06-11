@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="计算巢是阿里云开放给企业应用服务商的服务管理平台。服务商能够在计算巢上发布私有化部署服务，为其客户提供云上软件一键部署的能力；同时也支持全托管模式的服务，赋能服务商托管其客户资源。">
+  <title>ComfyUI社区版 - Aliyun 计算巢 x Demo</title>
+
+  <link rel="shortcut icon" href="img/favicon.ico">
+
+  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css">
+  <link rel="stylesheet" href="css/theme.css">
+  
+
+  
+
+  
+  
+
+  
+    <script src="search/main.js"></script>
+  
+
+  
+
+  <script src="js/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="nav">
+      <div class="nav-inner">
+        <div class="logo">
+          <img src="./img/logo-2x.png">
+        </div>
+        <div class="nav-list">
+          <ul>
+          
+              <li><a href="#comfyui">ComfyUI社区版</a></li>
+              
+                  <li><a href="#_1">概述</a></li>
+                  
+              
+                  <li><a href="#_2">前提条件</a></li>
+                  
+              
+                  <li><a href="#_3">计费说明</a></li>
+                  
+              
+                  <li><a href="#_4">整体架构</a></li>
+                  
+              
+                  <li><a href="#_5">部署流程</a></li>
+                  
+              
+                  <li><a href="#_6">内置模型说明</a></li>
+                  
+                      <li class="li-h3"><a href="#_7">如何上传自己的模型</a></li>
+                  
+              
+                  <li><a href="#_8">使用流程</a></li>
+                  
+                      <li class="li-h3"><a href="#_9">图生视频或文生视频功能</a></li>
+                  
+                      <li class="li-h3"><a href="#_10">文生图功能</a></li>
+                  
+                      <li class="li-h3"><a href="#_11">图生图功能</a></li>
+                  
+              
+                  <li><a href="#api">API调用</a></li>
+                  
+                      <li class="li-h3"><a href="#api_1">API 端点概览</a></li>
+                  
+                      <li class="li-h3"><a href="#api_2">文生视频API方式</a></li>
+                  
+                      <li class="li-h3"><a href="#api_3">图生视频API方式</a></li>
+                  
+                      <li class="li-h3"><a href="#_12">常见问题</a></li>
+                  
+              
+          
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="content theme-github">
+      
+      <div class="content-inner">        
+        
+        <h1 id="comfyui">ComfyUI社区版</h1>
+<blockquote>
+<p><strong>免责声明：</strong>本服务由第三方提供，我们尽力确保其安全性、准确性和可靠性，但无法保证其完全免于故障、中断、错误或攻击。因此，本公司在此声明：对于本服务的内容、准确性、完整性、可靠性、适用性以及及时性不作任何陈述、保证或承诺，不对您使用本服务所产生的任何直接或间接的损失或损害承担任何责任；对于您通过本服务访问的第三方网站、应用程序、产品和服务，不对其内容、准确性、完整性、可靠性、适用性以及及时性承担任何责任，您应自行承担使用后果产生的风险和责任；对于因您使用本服务而产生的任何损失、损害，包括但不限于直接损失、间接损失、利润损失、商誉损失、数据损失或其他经济损失，不承担任何责任，即使本公司事先已被告知可能存在此类损失或损害的可能性；我们保留不时修改本声明的权利，因此请您在使用本服务前定期检查本声明。如果您对本声明或本服务存在任何问题或疑问，请联系我们。</p>
+</blockquote>
+<h2 id="_1">概述</h2>
+<p>ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、视频及音频内容。依托前沿开源模型可实现视频与图像生成。
+依据官方文档，ComfyUI具有以下特点：
++ 节点/图形/流程图界面，用于实验和创建复杂的稳定扩散工作流程，无需编写任何代码。
++ 完全支持 SD1.x、SD2.x 和 SDXL
++ 异步队列系统
++ 多项优化 只重新执行工作流中在两次执行之间发生变化的部分。
++ 命令行选项：--lowvram 可使其在 3GB 内存以下的 GPU 上运行（在低内存的 GPU 上自动启用）
++ 即使没有 GPU 也能使用： --cpu（慢速）
++ 可加载 ckpt、safetensors 和 diffusers 模型/检查点。独立的 VAE 和 CLIP 模型。
++ 嵌入/文本反演
++ Loras （常规、locon 和 loha）
++ 超网络
++ 从生成的 PNG 文件加载完整的工作流（含种子
++ 以 Json 文件保存/加载工作流。
++ 节点界面可用于创建复杂的工作流程，如 "Hires fix "或更高级的工作流程。
++ 区域合成
++ 使用常规和内绘模型进行内绘。
++ 控制网络和 T2I 适配器
++ 升级模型（ESRGAN、ESRGAN 变体、SwinIR、Swin2SR 等）
++ unCLIP 模型
++ GLIGEN
++ 模型合并 
++ 使用 TAESD 进行潜伏预览 
++ 启动速度极快。 
++ 完全离线工作：不会下载任何东西。 
++ 配置文件可设置模型的搜索路径。</p>
+<h2 id="_2">前提条件</h2>
+<table>
+<thead>
+<tr>
+<th>权限策略名称</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AliyunECSFullAccess</td>
+<td>管理云服务器服务（ECS）的权限</td>
+</tr>
+<tr>
+<td>AliyunVPCFullAccess</td>
+<td>管理专有网络（VPC）的权限</td>
+</tr>
+<tr>
+<td>AliyunROSFullAccess</td>
+<td>管理资源编排服务（ROS）的权限</td>
+</tr>
+<tr>
+<td>AliyunCSFullAccess</td>
+<td>管理容器服务（CS）的权限</td>
+</tr>
+<tr>
+<td>AliyunComputeNestUserFullAccess</td>
+<td>管理计算巢服务（ComputeNest）的用户侧权限</td>
+</tr>
+<tr>
+<td>AliyunOSSFullAccess</td>
+<td>管理网络对象存储服务（OSS）的权限</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">计费说明</h2>
+<p>本服务在阿里云上的费用主要涉及：
+* ACS费用
+* 跳板机ECS费用
+    * 说明：该ECS用于部署和管理K8S集群，/root目录中保存了部署所用到的K8S Yaml资源文件，后期需要修改了参数重新部署可以直接在该基础上修改后重新执行kubectl apply。
+      部署完成如不需要也可自行释放。
+* OSS费用
+  计费方式：按量付费（小时）或包年包月
+  预估费用在创建实例时可实时看到。</p>
+<h2 id="_4">整体架构</h2>
+<p><img alt="arch.png" src="img/arch.png" /></p>
+<h2 id="_5">部署流程</h2>
+<ol>
+<li>
+<p>单击<a href="https://computenest.console.aliyun.com/service/instance/create/cn-hangzhou?type=user&amp;ServiceName=ComfyUI-ACS%E7%A4%BE%E5%8C%BA%E7%89%88">部署链接</a>。根据界面提示填写参数，可以看到对应询价明细，确认参数后点击<strong>下一步：确认订单</strong>。
+   <img alt="img.png" src="img.png" /></p>
+</li>
+<li>
+<p>点击<strong>下一步：确认订单</strong>后可以也看到价格预览，随后点击<strong>立即部署</strong>，等待部署完成。
+   <img alt="img_1.png" src="img/price.png" /></p>
+</li>
+<li>
+<p>等待部署完成后就可以开始使用服务。
+   <img alt="img_2.png" src="img_2.png" /></p>
+</li>
+</ol>
+<h2 id="_6">内置模型说明</h2>
+<table>
+<thead>
+<tr>
+<th>模型名称</th>
+<th>类型</th>
+<th>参数规模</th>
+<th>分辨率</th>
+<th>量化格式</th>
+<th>简介</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wan2_1-I2V-14B-480P_fp8_e4m3fn.safetensors</td>
+<td>图生视频</td>
+<td>14B</td>
+<td>480P</td>
+<td>FP8 E4M3FN</td>
+<td>WanVideo 2.1图生视频模型，14B参数，支持480P分辨率输出，使用FP8量化以节省显存</td>
+</tr>
+<tr>
+<td>Wan2_1-T2V-14B_fp8_e4m3fn.safetensors</td>
+<td>文生视频</td>
+<td>14B</td>
+<td>标准</td>
+<td>FP8 E4M3FN</td>
+<td>WanVideo 2.1文生视频模型，14B参数，直接从文本生成视频，FP8量化版本</td>
+</tr>
+<tr>
+<td>flux1-dev.safetensors</td>
+<td>图像生成</td>
+<td>-</td>
+<td>高分辨率</td>
+<td>标准</td>
+<td>Flux.1 Dev模型，高质量图像生成模型，支持高分辨率输出，开发者版本</td>
+</tr>
+<tr>
+<td>wan2.1/Wan2_1-T2V-1_3B_fp8_e4m3fn.safetensors</td>
+<td>文生视频</td>
+<td>1.3B</td>
+<td>标准</td>
+<td>FP8 E4M3FN</td>
+<td>WanVideo 2.1轻量版文生视频模型，1.3B参数，相比14B版本显存需求更低，适合资源受限环境</td>
+</tr>
+<tr>
+<td>vace-1.3b.safetensors</td>
+<td>视频编辑</td>
+<td>1.3B</td>
+<td>标准</td>
+<td>标准</td>
+<td>VACE 1.3B视频编辑模型，专注于视频内容编辑和处理，轻量化设计，适合快速视频编辑任务</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_7">如何上传自己的模型</h3>
+<ol>
+<li>在计算巢控制台找到部署的服务实例，并切换Tab到资源界面，并找到所属产品为对象存储 OSS的资源，点击进入。<img alt="img_3.png" src="img_3.png" /></li>
+<li>访问"文件列表"，在路径为/llm-model/model下为所有类型的模型。<img alt="img_4.png" src="img_4.png" /></li>
+<li>可根据自己的需求上传模型，并重启comfyui客户端即可。<img alt="img_5.png" src="img_5.png" /></li>
+</ol>
+<h2 id="_8">使用流程</h2>
+<p>本服务已经内置了两个可以直接使用的工作流。其中涉及的插件和模型也已经准备好。
+<img alt="img_1.png" src="img/workflows.png" /></p>
+<h3 id="_9">图生视频或文生视频功能</h3>
+<ol>
+<li>在下图处选择想要的功能。建议只选择一种进行使用，避免爆内存。<img alt="img.png" src="img/option.png" /></li>
+<li>按图中指引选择工作流侧栏，选择wanx-21.json并打开。<img alt="img.png" src="img/app2.png" /></li>
+<li>在此处选择示例图片或选择自己本机电脑上传。<img alt="img.png" src="img/app3.png" /></li>
+<li>在TextEncode处填写描述词。上面部分是你想要生成的内容，下面部分是你不想要生成的内容。<img alt="img.png" src="img/prompt.png" /></li>
+<li>在ImageClip Encode处可设置图片的分辨率和帧数。本模型最高可设置720*720。<img alt="img.png" src="img/definition.png" /></li>
+<li>其余参数可参考官网：https://comfyui-wiki.com/zh/interface/node-options  或以下文档：https://github.com/kijai/ComfyUI-WanVideoWrapper/blob/main/readme.md</li>
+</ol>
+<p>PS：如果使用vace模型，可使用工作流vace.json作为参考
+<img alt="img_9.png" src="img_9.png" /></p>
+<h3 id="_10">文生图功能</h3>
+<ol>
+<li>工作流框处选择该工作流funny_pictures.json。<img alt="img.png" src="img/text2img.png" /></li>
+<li>输入你想要的内容。<img alt="img.png" src="img/text2img2.png" /></li>
+<li>这里可以输入一些比较搞怪的内容，比如我这里是关羽大战白雪公主。</li>
+<li>可以在此处设置图片的分辨率和图片的数量。如果想加快生产速度，可将batch_size设置为1.<img alt="img.png" src="img/text2img3.png" /></li>
+<li>等待图片的生成。</li>
+</ol>
+<h3 id="_11">图生图功能</h3>
+<p>访问模版，或自己导入工作流使用。<img alt="img2img.png" src="img/img2img.png" /></p>
+<h2 id="api">API调用</h2>
+<h3 id="api_1">API 端点概览</h3>
+<table>
+<thead>
+<tr>
+<th>端点</th>
+<th>方法</th>
+<th>功能</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/queue</code></td>
+<td>GET</td>
+<td>获取队列状态</td>
+<td>查看当前任务队列</td>
+</tr>
+<tr>
+<td><code>/prompt</code></td>
+<td>POST</td>
+<td>提交工作流</td>
+<td>执行生成任务</td>
+</tr>
+<tr>
+<td><code>/history/{prompt_id}</code></td>
+<td>GET</td>
+<td>获取执行历史</td>
+<td>查看任务执行结果</td>
+</tr>
+<tr>
+<td><code>/upload/image</code></td>
+<td>POST</td>
+<td>上传图片</td>
+<td>上传输入图片文件</td>
+</tr>
+<tr>
+<td><code>/view</code></td>
+<td>GET</td>
+<td>下载输出文件</td>
+<td>获取生成的结果文件</td>
+</tr>
+</tbody>
+</table>
+<p>支持公网或者私网的API调用。
+可参考一下代码实现一个API调用的脚本。</p>
+<pre><code class="language-python">import requests
+import json
+import time
+
+def run_workflow_file(workflow_file, server=&quot;http://127.0.0.1:8188&quot;):
+    &quot;&quot;&quot;运行本地工作流JSON文件&quot;&quot;&quot;
+
+    # 加载工作流
+    with open(workflow_file, 'r', encoding='utf-8') as f:
+        workflow = json.load(f)
+
+    # 提交
+    response = requests.post(f&quot;{server}/prompt&quot;, json={&quot;prompt&quot;: workflow})
+    prompt_id = response.json()['prompt_id']
+    print(f&quot;任务提交: {prompt_id}&quot;)
+
+    # 等待完成
+    while True:
+        response = requests.get(f&quot;{server}/history/{prompt_id}&quot;)
+        history = response.json()
+        if prompt_id in history:
+            break
+        print(&quot;等待中...&quot;)
+        time.sleep(3)
+
+    # 下载所有输出文件
+    outputs = history[prompt_id]['outputs']
+    for node_id, node_output in outputs.items():
+        # 处理不同类型的输出
+        for file_type in ['images', 'videos', 'gifs']:
+            if file_type in node_output:
+                for file_info in node_output[file_type]:
+                    filename = file_info['filename']
+                    file_url = f&quot;{server}/view?filename={filename}&amp;type=output&quot;
+
+                    response = requests.get(file_url)
+                    with open(filename, 'wb') as f:
+                        f.write(response.content)
+                    print(f&quot;已下载: {filename}&quot;)
+
+# 使用示例
+run_workflow_file(&quot;my_workflow.json&quot;)
+</code></pre>
+<p>其中本地工作流采用下图提供的方式来获取：
+<img alt="img_6.png" src="img_6.png" /></p>
+<p>由于Comfyui未提供官方的API文档，此处根据文生视频和图生视频提供两个完整的示例：关于如何使用API来调用工作流进行文生图或者文生视频等
+访问：https://github.com/aliyun-computenest/comfyui-acs/
+找到demo文件夹
+<img alt="img_7.png" src="img_7.png" /></p>
+<h3 id="api_2">文生视频API方式</h3>
+<ol>
+<li>打开text_to_video_workflow.json为定义的工作流，确认好模型。（里面默认定义的模型为14B的万相2.1文生视频模型）</li>
+<li>确认好Prompt和生成的分辨率等参数</li>
+<li>修改代码中server服务地址，由127.0.0.1到你的实际服务地址。<img alt="img_8.png" src="img_8.png" /></li>
+<li>本地执行python text_to_video_example.py，等待视频生成</li>
+</ol>
+<h3 id="api_3">图生视频API方式</h3>
+<ol>
+<li>打开image_to_video_workflow.json为定义的工作流，确认好模型。（里面默认定义的模型为14B的万相2.1图生视频模型）</li>
+<li>确认好Prompt和生成的分辨率等参数</li>
+<li>修改代码中server服务地址，由127.0.0.1到你的实际服务地址。<img alt="img_8.png" src="img_8.png" /></li>
+<li>本地执行python image_to_video_example.py，等待视频生成</li>
+</ol>
+<h3 id="_12">常见问题</h3>
+<ol>
+<li>出现某个节点类型不存在，通过manager安装缺少的节点，并重启。<img alt="img_1.png" src="img/issue1.png" /><img alt="img.png" src="img/issue2.png" /></li>
+</ol>
+        
+      </div>
+
+      <div class="copyrights">© 2009-2022 Aliyun.com 版权所有</div>
+    </div>
+  </div>
+  
+  <!--
+  MkDocs version      : 1.6.1
+  Docs Build Date UTC : 2025-06-11 03:16:13.445258+00:00
+  -->
+</body>
+</html>
