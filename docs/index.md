@@ -67,6 +67,8 @@ ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、�
 3. 等待部署完成后就可以开始使用服务。
    ![img_2.png](img_2.png)
 
+
+
 ## 内置模型说明
 | 模型名称 | 类型 | 参数规模 | 分辨率 | 量化格式 | 简介 |
 |---------|------|---------|---------|----------|------|
@@ -74,6 +76,7 @@ ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、�
 | Wan2_1-T2V-14B_fp8_e4m3fn.safetensors | 文生视频 | 14B | 标准 | FP8 E4M3FN | WanVideo 2.1文生视频模型，14B参数，直接从文本生成视频，FP8量化版本 |
 | flux1-dev.safetensors | 图像生成 | - | 高分辨率 | 标准 | Flux.1 Dev模型，高质量图像生成模型，支持高分辨率输出，开发者版本 |
 | wan2.1/Wan2_1-T2V-1_3B_fp8_e4m3fn.safetensors | 文生视频 | 1.3B | 标准 | FP8 E4M3FN | WanVideo 2.1轻量版文生视频模型，1.3B参数，相比14B版本显存需求更低，适合资源受限环境 |
+| vace-1.3b.safetensors | 视频编辑 | 1.3B | 标准 | 标准 | VACE 1.3B视频编辑模型，专注于视频内容编辑和处理，轻量化设计，适合快速视频编辑任务 |
 
 ### 如何上传自己的模型
 1. 在计算巢控制台找到部署的服务实例，并切换Tab到资源界面，并找到所属产品为对象存储 OSS的资源，点击进入。![img_3.png](img_3.png)
@@ -90,6 +93,9 @@ ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、�
 4. 在TextEncode处填写描述词。上面部分是你想要生成的内容，下面部分是你不想要生成的内容。![img.png](img/prompt.png)
 5. 在ImageClip Encode处可设置图片的分辨率和帧数。本模型最高可设置720*720。![img.png](img/definition.png)
 6. 其余参数可参考官网：https://comfyui-wiki.com/zh/interface/node-options  或以下文档：https://github.com/kijai/ComfyUI-WanVideoWrapper/blob/main/readme.md
+
+PS：如果使用vace模型，可使用工作流vace.json作为参考
+![img_9.png](img_9.png)
 
 ### 文生图功能
 1. 工作流框处选择该工作流funny_pictures.json。![img.png](img/text2img.png)
