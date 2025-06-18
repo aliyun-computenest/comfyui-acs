@@ -33,7 +33,7 @@ spec:
         - name: acs-image-secret
       containers:
         - name: comfyui
-          image: compute-nest-registry.cn-hangzhou.cr.aliyuncs.com/computenest/comfyui:latest
+          image: compute-nest-registry.cn-hangzhou.cr.aliyuncs.com/computenest/wanx-acs:latest
           workingDir: /workspace/pytorch/ComfyUI
           ports:
             - containerPort: 8188
