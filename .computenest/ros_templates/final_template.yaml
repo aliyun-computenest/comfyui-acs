@@ -35,11 +35,9 @@ Parameters:
     Label:
       en: Model Series
       zh-cn: 模型系列
-    Default:
-      zh-cn: WanX-2.1。包含14B文、图生视频，1.3B文生视频，1.3BVace和Flux.dev模型
-      en: WanX-2.1 contains 14B text, 1.3B text-to-video, 1.3B video-to-text, and Flux.dev models
+    Default: WanX-2.1(I2V-14B,T2V-14B,VACE-1.3B and I2V-1.3B)
     AllowedValues:
-      - WanX-2.1
+      - WanX-2.1(I2V-14B,T2V-14B,VACE-1.3B and I2V-1.3B)
   GpuSeries:
     Type: String
     Label:
@@ -100,22 +98,20 @@ Parameters:
             - cn-shanghai-f
             - cn-shanghai-o
             - cn-wulanchabu-c
-
-  LoginPassword:
-    NoEcho: true
-    Type: String
-    Description:
-      en: 'Length 8-32 characters, can contain size letters, Numbers and special symbols, including:! @ # $ % ^ & * ( ) _ + - ='
-      zh-cn: 长度8-32个字符,可包含大小字母、数字及特殊符号（包含：!@#$%^&*()_+-=）
-    Label:
-      en: Instance Password
-      zh-cn: 实例密码
-    ConstraintDescription:
-      en: '8-32 characters, can contain size letters, Numbers and special symbols, including:! @ # $ % ^ & * ( ) _ + - ='
-      zh-cn: 8-32个字符,可包含大小字母、数字及特殊符号（包含：!@#$%^&*()_+-=）
-    MinLength: 8
-    MaxLength: 32
 Resources:
+  RandomPassword:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 11
+      character_classes:
+        - class: "lowercase"
+          min: 4
+        - class: "uppercase"
+          min: 4
+        - class: "digits"
+          min: 2
+      character_sequences:
+        - sequence: "!@#$^*-+="
   OSSBucket:
     Type: 'ALIYUN::OSS::Bucket'
     Properties:
@@ -258,7 +254,7 @@ Resources:
         Ref: EcsSecurityGroup
       AllocatePublicIP: false
       Password:
-        Ref: LoginPassword
+        Ref: RandomPassword
       MaxAmount: 1
       InstanceChargeType: PostPaid
       SystemDiskSize: 200
@@ -540,103 +536,6 @@ Resources:
           - ClusterId
       Name: svc-public
 Mappings:
-  ModelMapping:
-    #    ModelImageMap:
-    #      'QwQ-32B_H20': 'm-qwq-32b-h20'
-    #      'Qwen3-32B_H20': 'm-qwen3-32b'
-    #      'Qwen3-32B_PPU': 'm-qwen3-32b'
-    #      'Qwen3-235B-A22B_H20': 'm-qwen3-235b-a22b'
-    #      'Qwen3-235B-A22B_PPU': 'm-qwen3-235b-a22b'
-    #      'Qwen3-235B-A22B_FP8_H20': 'm-qwen3-235b-a22b-fp8'
-    #      'DeepSeek-R1_671B_H20': 'm-deepseek-r1-671b'
-    #      'DeepSeek-R1_671B_H20-3e': 'm-deepseek-r1-671b'
-    #      'DeepSeek-R1_671B_PPU': 'm-deepseek-r1-671b'
-    #      'DeepSeek-R1_32B_H20': 'm-deepseek-r1-32b'
-    #      'DeepSeek-R1_32B_H20-3e': 'm-deepseek-r1-32b'
-    #      'DeepSeek-R1_32B_PPU': 'm-deepseek-r1-32b'
-    #      'DeepSeek-R1_70B_H20': 'm-deepseek-r1-70b'
-    #      'DeepSeek-R1_70B_H20-3e': 'm-deepseek-r1-70b'
-    #      'DeepSeek-R1_70B_PPU': 'm-deepseek-r1-70b'
-    ModelNameMap:
-      'QwQ-32B_H20': 'Qwen/QwQ-32B'
-      'Qwen3-32B_H20': 'Qwen/Qwen3-32B'
-      'Qwen3-32B_PPU': 'Qwen/Qwen3-32B'
-      'Qwen3-235B-A22B_H20': 'Qwen/Qwen3-235B-A22B'
-      'Qwen3-235B-A22B_PPU': 'Qwen/Qwen3-235B-A22B'
-      'Qwen3-235B-A22B_FP8_H20': 'Qwen/Qwen3-235B-A22B-FP8'
-      'DeepSeek-R1_671B_H20': 'deepseek-ai/DeepSeek-R1'
-      'DeepSeek-R1_671B_H20-3e': 'deepseek-ai/DeepSeek-R1'
-      'DeepSeek-R1_671B_PPU': 'deepseek-ai/DeepSeek-R1'
-      'DeepSeek-R1_32B_H20': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
-      'DeepSeek-R1_32B_H20-3e': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
-      'DeepSeek-R1_32B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
-      'DeepSeek-R1_70B_H20': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
-      'DeepSeek-R1_70B_H20-3e': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
-      'DeepSeek-R1_70B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
-    ModelDiskSizeMap:
-      'QwQ-32B_H20': 170
-      'Qwen3-32B_H20': 200
-      'Qwen3-32B_PPU': 200
-      'Qwen3-235B-A22B_H20': 1500
-      'Qwen3-235B-A22B_PPU': 1500
-      'Qwen3-235B-A22B_FP8_H20': 550
-      'DeepSeek-R1_671B_H20': 1500
-      'DeepSeek-R1_671B_H20-3e': 1500
-      'DeepSeek-R1_671B_PPU': 1500
-      'DeepSeek-R1_32B_H20': 170
-      'DeepSeek-R1_32B_H20-3e': 170
-      'DeepSeek-R1_32B_PPU': 170
-      'DeepSeek-R1_70B_H20': 300
-      'DeepSeek-R1_70B_H20-3e': 300
-      'DeepSeek-R1_70B_PPU': 300
-    ServedModelNameMap:
-      'QwQ-32B_H20': 'qwq-32b'
-      'Qwen3-32B_H20': 'qwen3'
-      'Qwen3-32B_PPU': 'qwen3'
-      'Qwen3-235B-A22B_H20': 'qwen3'
-      'Qwen3-235B-A22B_PPU': 'qwen3'
-      'Qwen3-235B-A22B_FP8_H20': 'qwen3'
-      'DeepSeek-R1_671B_H20': 'deepseek-r1'
-      'DeepSeek-R1_671B_H20-3e': 'deepseek-r1'
-      'DeepSeek-R1_671B_PPU': 'deepseek-r1'
-      'DeepSeek-R1_32B_H20': 'deepseek-r1'
-      'DeepSeek-R1_32B_H20-3e': 'deepseek-r1'
-      'DeepSeek-R1_32B_PPU': 'deepseek-r1'
-      'DeepSeek-R1_70B_H20': 'deepseek-r1'
-      'DeepSeek-R1_70B_H20-3e': 'deepseek-r1'
-      'DeepSeek-R1_70B_PPU': 'deepseek-r1'
-    ModelYamlMap:
-      'QwQ-32B_H20': 'qwq-application.yaml'
-      'Qwen3-32B_H20': 'qwen3-32b-h20-application.yaml'
-      'Qwen3-32B_PPU': 'qwen3-32b-ppu-application.yaml'
-      'Qwen3-235B-A22B_H20': 'qwen3-235b-a22b-h20-application.yaml'
-      'Qwen3-235B-A22B_PPU': 'qwen3-235b-a22b-ppu-application.yaml'
-      'Qwen3-235B-A22B_FP8_H20': 'qwen3-235b-a22b-fp8-h20-application.yaml'
-      'DeepSeek-R1_671B_H20': 'deepseek-671b-h20-application.yaml'
-      'DeepSeek-R1_671B_H20-3e': 'deepseek-671b-h20-3e-application.yaml'
-      'DeepSeek-R1_671B_PPU': 'deepseek-671b-ppu-application.yaml'
-      'DeepSeek-R1_32B_H20': 'deepseek-32b-h20-application.yaml'
-      'DeepSeek-R1_32B_H20-3e': 'deepseek-32b-h20-3e-application.yaml'
-      'DeepSeek-R1_32B_PPU': 'deepseek-32b-ppu-application.yaml'
-      'DeepSeek-R1_70B_H20': 'deepseek-70b-h20-application.yaml'
-      'DeepSeek-R1_70B_H20-3e': 'deepseek-70b-h20-3e-application.yaml'
-      'DeepSeek-R1_70B_PPU': 'deepseek-70b-ppu-application.yaml'
-    GPUModelMap:
-      'QwQ-32B_H20': 'H20'
-      'Qwen3-32B_H20': 'H20'
-      'Qwen3-32B_PPU': 'PPU810E'
-      'Qwen3-235B-A22B_H20': 'H20'
-      'Qwen3-235B-A22B_PPU': 'PPU810E'
-      'Qwen3-235B-A22B_FP8_H20': 'H20'
-      'DeepSeek-R1_671B_H20': 'H20'
-      'DeepSeek-R1_671B_H20-3e': 'H20-3e'
-      'DeepSeek-R1_671B_PPU': 'PPU810E'
-      'DeepSeek-R1_32B_H20': 'H20'
-      'DeepSeek-R1_32B_H20-3e': 'H20-3e'
-      'DeepSeek-R1_32B_PPU': 'PPU810E'
-      'DeepSeek-R1_70B_H20': 'H20'
-      'DeepSeek-R1_70B_H20-3e': 'H20-3e'
-      'DeepSeek-R1_70B_PPU': 'PPU810E'
     PPU810E_CPUMap:
       '1': 10
       '2': 22
@@ -669,21 +568,36 @@ Outputs:
             Fn::GetAtt:
               - PublicIngressResources
               - Response
+  InstancePassword:
+    NoEcho: 'True'
+    Label:
+      en: Ecs Instance password
+      zh-cn: ECS实例密码
+    Description:
+      en: Initial instance password
+      zh-cn: ECS实例密码
+    Value:
+      Fn::GetAtt:
+        - RandomPassword
+        - value
 Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:
       - Parameters:
           - WhitelistConfirmation
+        Label:
+          en: Whitelist Confirmation
+          zh-cn: 白名单确认
+      - Parameters:
           - ModelSeries
           - GpuSeries
-          - SupportPublicAccess
         Label:
           en: Model Config
           zh-cn: 模型配置
       - Parameters:
           - AcsZoneId
           - EcsZoneId
-          - LoginPassword
+          - SupportPublicAccess
         Label:
           en: Basic Configuration
           zh-cn: 资源配置
