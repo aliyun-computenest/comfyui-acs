@@ -53,7 +53,8 @@ ComfyUI是 最强大的开源节点式生成式AI应用，支持创建图像、�
   预估费用在创建实例时可实时看到。
 
 ## 整体架构
-![img_10.png](img_10.png)
+
+![acs-arch.png](acs-arch.png)
 
 ## 部署流程
 
