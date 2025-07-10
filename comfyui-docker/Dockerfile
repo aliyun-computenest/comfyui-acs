@@ -1,5 +1,5 @@
 # 使用原始镜像作为基础
-FROM egslingjun-registry.cn-wulanchabu.cr.aliyuncs.com/egslingjun/inference-xpu-pytorch:25.05-v1.5.1-vllm0.8.5-torch2.6-cu126-20250528
+FROM compute-nest-registry.cn-hangzhou.cr.aliyuncs.com/computenest/wanx-acs:latest
 
 # 设置工作目录
 WORKDIR /workspace/pytorch
