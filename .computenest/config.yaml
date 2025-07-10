@@ -1,76 +1,68 @@
 Service:
-  RegionId: cn-hangzhou
+  RegionId: ap-southeast-1
   DeployType: ros
   OperationMetadata:
     StatusOperationConfigs:
-      - TemplateName: 万象21
-        SupportOperations:
-          - Start
-          - Stop
-          - Restart
+    - TemplateName: ECS单机版
+      SupportOperations:
+      - Start
+      - Stop
+      - Restart
     SupportBackup: true
     ModifyParametersConfig:
-      - TemplateName: 万象21
-        Operation:
-          - Name: 变更ECS实例规格
-            Description: 变更ECS实例规格
-            Type: Custom
-            Parameters:
-              - EcsInstanceType
-          - Name: 变更ECS实例密码
-            Description: 变更ECS实例密码
-            Type: Custom
-            Parameters:
-              - InstancePassword
-      
+    - TemplateName: ECS单机版
+      Operation:
+      - Name: 变更ECS实例规格
+        Description: 变更ECS实例规格
+        Type: Custom
+        Parameters:
+        - EcsInstanceType
+      - Name: 变更ECS实例密码
+        Description: 变更ECS实例密码
+        Type: Custom
+        Parameters:
+        - InstancePassword
   DeployMetadata:
     SupplierDeployMetadata:
       SupplierTemplateConfigs:
-        - Name: 万象21
-          Url: 'ros_templates/template.yaml'
-          ArchitectureDiagramUrl: 'resources/architecture/architecture.jpg'
-          AllowedRegions:
-            - ap-southeast-1
-      ArtifactRelation:
-        ecs_image-stable-diffusion-webui:
-          ArtifactId: ${Artifact.EcsImage.ArtifactId}
-          ArtifactVersion: draft
-    TemplateConfigs:
-      - Name: 万象21
+      - Name: ECS单机版
         Url: 'ros_templates/template.yaml'
         ArchitectureDiagramUrl: 'resources/architecture/architecture.jpg'
         AllowedRegions:
-          - ap-southeast-1
+        - ap-southeast-1
+      ArtifactRelation:
+        ecs_image_comfyui-acs:
+          ArtifactId: ${Artifact.EcsImage.ArtifactId}
+          ArtifactVersion: draft
+    TemplateConfigs:
+    - Name: ECS单机版
+      Url: 'ros_templates/template.yaml'
+      ArchitectureDiagramUrl: 'resources/architecture/architecture.jpg'
+      AllowedRegions:
+      - ap-southeast-1
   ServiceType: private
   ServiceInfo:
     # 英文版可以再配置Locale为en-US的服务信息
-    - Locale: zh-CN
-      ShortDescription: demo
-      Image: 'resources/icons/service_logo.png'
-
-ImageBuilder:
-  EcsImage:
-    RegionId: ap-southeast-1
-    SourceImageId: m-t4n7hdik5d6zppvw5u9u
-    SystemDiskSize: 200
-    InstanceType: ecs.gn6i-c4g1.xlarge
-    InternetMaxBandwidthOut: 100
-    CommandType: RunShellScript
-    Timeout: 10800
-    CommandContent: |-
-      git clone https://github.com/aliyun-computenest/stable-diffusion-webui
-      cd stable-diffusion-webui/webui
-      docker compose -f build 2>&1 | stdbuf -oL grep -viE 'Downloading|sha256|extracting|KiB|Downloaded';
-      docker compose up -d;
-      sleep 20;
-      docker compose down;
+  - Locale: zh-CN
+    Name: ComfyUI社区版
+    ShortDescription: 最强大的开源节点式生成式AI应用，支持创建图像、视频及音频内容。依托前沿开源模型实现视频与图像生成。
+    Image: 
+      https://service-info-public.oss-cn-hangzhou.aliyuncs.com/5141674772595072/service-image/3af5b471-faf4-4db1-b97c-1208fe09b03b.jpeg
+    Softwares: []
 Artifact:
   EcsImage:
     ArtifactType: EcsImage
-    ArtifactName: ecs_image-stable-diffusion-webui
-    Description: stable-diffusion ui EcsImage
+    ArtifactName: ecs_image_comfyui-acs
+    Description: comfyui-acs EcsImage
     SupportRegionIds:
-      - ap-southeast-1
-    ArtifactProperty:
-      RegionId: ${ImageBuilder.EcsImage.RegionId}
-      ImageId: ${ImageBuilder.EcsImage.SourceImageId}
+    - ap-southeast-1
+    ArtifactBuildProperty:
+      CodeRepo:
+        Platform: github
+        Owner: LYH-RAIN
+        RepoName: aliyun-computenest/comfyui-acs
+        Branch: main
+      RegionId: ap-southeast-1
+      CommandType: RunShellScript
+      CommandContent: |-
+        docker build  -f comfyui-docker/Dockerfile -t aliyun-computenest/comfyui-acs .  2>&1 | stdbuf -oL grep -viE 'Downloading|sha256|extracting|KiB|Downloaded';

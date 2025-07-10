@@ -1,1 +1,12 @@
-{"RepoName":"aliyun-computenest/comfy-ui","RegionId":"cn-hangzhou","Owner":"LYH-RAIN","Branch":"main","Platform":"github"}
+AdvancedOptions: false
+RuntimeType: Container
+DockerFilePath: comfyui-docker/Dockerfile
+ServiceType: private
+ArtifactSourceType: Dockerfile
+ServiceBuildRegion: ap-southeast-1
+RepoName: aliyun-computenest/comfyui-acs
+RegionId: ap-southeast-1
+CustomParameters: ''
+Owner: LYH-RAIN
+Branch: main
+Platform: github
